@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SportzStream Live - HLS Sports Hub</title>
+  
+  <!-- HLS.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-pitch: #07090e;
+      --bg-charcoal: #12161f;
+      --bg-panel: #181e2b;
+      --bg-card: #1f2737;
+      --accent-gold: #ffb800;
+      --accent-gold-hover: #ffc833;
+      --accent-gold-glow: rgba(255, 184, 0, 0.35);
+      --accent-cyan: #00e5ff;
+      --accent-cyan-hover: #33ebff;
+      --accent-cyan-glow: rgba(0, 229, 255, 0.25);
+      --text-main: #f3f6fa;
+      --text-muted: #8d9ba8;
+      --border-color: #263143;
+      --danger-color: #ff4757;
+      --live-green: #2ed573;
+      --font-display: 'Chakra Petch', sans-serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-pitch);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header Bar */
+    header {
+      background: linear-gradient(180deg, var(--bg-charcoal) 0%, rgba(18, 22, 31, 0.95) 100%);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent-gold), #ff8800);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #000;
+      font-weight: 900;
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      box-shadow: 0 0 15px var(--accent-gold-glow);
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #fff;
+    }
+
+    .brand-title span {
+      color: var(--accent-gold);
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 9999px;
+      background: rgba(0, 229, 255, 0.1);
+      border: 1px solid rgba(0, 229, 255, 0.3);
+      color: var(--accent-cyan);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--live-green);
+      box-shadow: 0 0 8px var(--live-green);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.3); }
+    }
+
+    /* Main Grid Layout */
+    main {
+      flex: 1;
+      padding: 1.5rem 2rem;
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+      .app-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Player Container */
+    .player-container {
+      background: var(--bg-charcoal);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .video-viewport {
+      position: relative;
+      background: #000;
+      aspect-ratio: 16 / 9;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      outline: none;
+      display: block;
+    }
+
+    .stream-overlay-info {
+      padding: 1.25rem 1.5rem;
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .current-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .stream-tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--accent-cyan);
+      letter-spacing: 0.8px;
+    }
+
+    .stream-name {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .current-url-display {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      word-break: break-all;
+      max-width: 500px;
+      font-family: monospace;
+    }
+
+    .player-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255, 184, 0, 0.1);
+      border: 1px solid var(--accent-gold);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      color: var(--accent-gold);
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    /* Channel List Sidebar */
+    .sidebar-panel {
+      background: var(--bg-charcoal);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 140px);
+      min-height: 500px;
+      max-height: 750px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .sidebar-title {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .channel-count {
+      background: var(--bg-card);
+      color: var(--accent-gold);
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-family: monospace;
+    }
+
+    #channel-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      overflow-y: auto;
+      padding-right: 0.35rem;
+      flex: 1;
+    }
+
+    /* Custom Scrollbar */
+    #channel-list::-webkit-scrollbar {
+      width: 5px;
+    }
+    #channel-list::-webkit-scrollbar-track {
+      background: var(--bg-charcoal);
+    }
+    #channel-list::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+    #channel-list::-webkit-scrollbar-thumb:hover {
+      background: var(--accent-cyan);
+    }
+
+    /* Channel Button Styling */
+    .channel-btn {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      color: var(--text-main);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .channel-btn::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: transparent;
+      transition: background 0.2s ease;
+    }
+
+    .channel-btn:hover {
+      background: var(--bg-card);
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 12px var(--accent-cyan-glow);
+      transform: translateY(-1px);
+    }
+
+    .channel-btn:hover::before {
+      background: var(--accent-cyan);
+    }
+
+    .channel-btn.active {
+      background: linear-gradient(90deg, rgba(255, 184, 0, 0.15) 0%, var(--bg-panel) 100%);
+      border-color: var(--accent-gold);
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 0 15px var(--accent-gold-glow);
+    }
+
+    .channel-btn.active::before {
+      background: var(--accent-gold);
+    }
+
+    .channel-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      overflow: hidden;
+    }
+
+    .channel-title-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .channel-id-text {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    .channel-status-pill {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(46, 213, 115, 0.15);
+      color: var(--live-green);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .custom-stream-box {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .custom-stream-box label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .custom-input-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .custom-input-row input {
+      flex: 1;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      color: #fff;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .custom-input-row input:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    .load-btn {
+      background: var(--accent-gold);
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      padding: 0.5rem 0.9rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+
+    .load-btn:hover {
+      background: var(--accent-gold-hover);
+      box-shadow: 0 0 10px var(--accent-gold-glow);
+    }
+
+    /* Notification & Empty States */
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .empty-state span {
+      display: block;
+      color: var(--accent-gold);
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: var(--bg-charcoal);
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">S</div>
+      <div class="brand-title">Sportz<span>Stream</span> Hub</div>
+    </div>
+    <div class="header-badge">
+      <div class="pulse-dot"></div>
+      <span>HLS Engine v2.0 Ready</span>
+    </div>
+  </header>
+
+  <!-- Main Grid Content -->
+  <main>
+    <div class="app-grid">
+      
+      <!-- Video Player Viewport -->
+      <section class="player-container">
+        <div class="video-viewport">
+          <video id="video-player" controls playsinline></video>
+        </div>
+        
+        <div class="stream-overlay-info">
+          <div class="current-meta">
+            <span class="stream-tag" id="channel-badge">Verified Stream</span>
+            <h1 class="stream-name" id="current-stream-name">Selecting channel...</h1>
+            <div class="current-url-display" id="current-stream-url"></div>
+          </div>
+          
+          <div class="player-status-badge" id="player-status">
+            <span>● Ready</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Channel Selector Sidebar -->
+      <aside class="sidebar-panel">
+        <div class="sidebar-header">
+          <div class="sidebar-title">
+            <span>Channels</span>
+            <span class="channel-count" id="channel-counter">0 Verified</span>
+          </div>
+        </div>
+
+        <!-- Dynamic List of Streams Generated by loadChannels() -->
+        <div id="channel-list">
+          <div class="empty-state" id="loading-indicator">
+            <span>⌛</span>
+            Connecting to stream manifest...
+          </div>
+        </div>
+
+        <!-- Quick Manual URL Loader -->
+        <div class="custom-stream-box">
+          <label for="custom-url-input">Direct HLS Stream Input (.m3u8)</label>
+          <div class="custom-input-row">
+            <input type="text" id="custom-url-input" placeholder="https://domain.com/live/stream.m3u8">
+            <button class="load-btn" onclick="playCustomInput()">Play</button>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <footer>
+    Automated HLS Sports Architecture &bull; Dark Mode Gold/Cyan Edition &bull; Hls.js HTML5 Player
+  </footer>
+
+  <script>
+    var currentHlsInstance = null;
+    var video = document.getElementById('video-player');
+    var currentStreamNameElem = document.getElementById('current-stream-name');
+    var currentStreamUrlElem = document.getElementById('current-stream-url');
+    var playerStatusElem = document.getElementById('player-status');
+
+    /**
+     * Plays the specified HLS (.m3u8) stream URL using Hls.js
+     * with graceful native fallback for Safari/WebKit.
+     */
+    function playStream(streamUrl, channelName) {
+      if (!streamUrl) return;
+
+      var displayName = channelName || 'Custom Stream';
+      currentStreamNameElem.textContent = displayName;
+      currentStreamUrlElem.textContent = streamUrl;
+      playerStatusElem.textContent = 'Buffering...';
+      playerStatusElem.style.borderColor = 'var(--accent-cyan)';
+      playerStatusElem.style.color = 'var(--accent-cyan)';
+
+      // Highlight active button in the list
+      var buttons = document.querySelectorAll('.channel-btn');
+      buttons.forEach(function(btn) {
+        if (btn.dataset.streamUrl === streamUrl) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      // Teardown previous Hls.js instance to prevent memory leaks and audio overlapping
+      if (currentHlsInstance) {
+        currentHlsInstance.destroy();
+        currentHlsInstance = null;
+      }
+
+      // 1. Primary engine: Hls.js
+      if (Hls.isSupported()) {
+        currentHlsInstance = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+          backBufferLength: 60
+        });
+
+        currentHlsInstance.loadSource(streamUrl);
+        currentHlsInstance.attachMedia(video);
+
+        currentHlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
+          playerStatusElem.textContent = '● Playing Live';
+          playerStatusElem.style.borderColor = 'var(--accent-gold)';
+          playerStatusElem.style.color = 'var(--accent-gold)';
+          
+          var playPromise = video.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(function(err) {
+              console.warn('Autoplay blocked by browser policy. User must tap play:', err);
+              playerStatusElem.textContent = 'Tap to Play';
+            });
+          }
+        });
+
+        currentHlsInstance.on(Hls.Events.ERROR, function(event, data) {
+          if (data.fatal) {
+            switch(data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                console.error('Fatal network error encountered, attempting recovery...', data);
+                playerStatusElem.textContent = 'Network Error';
+                currentHlsInstance.startLoad();
+                break;
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                console.error('Fatal media error encountered, attempting recovery...', data);
+                playerStatusElem.textContent = 'Media Recovery...';
+                currentHlsInstance.recoverMediaError();
+                break;
+              default:
+                console.error('Unrecoverable HLS error:', data);
+                playerStatusElem.textContent = 'Stream Offline';
+                playerStatusElem.style.borderColor = 'var(--danger-color)';
+                playerStatusElem.style.color = 'var(--danger-color)';
+                currentHlsInstance.destroy();
+                break;
+            }
+          }
+        });
+      }
+      // 2. Fallback for native Safari / iOS WebKit HLS player
+      else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = streamUrl;
+        video.addEventListener('loadedmetadata', function() {
+          playerStatusElem.textContent = '● Playing Native';
+          video.play();
+        });
+      } else {
+        alert('Your browser does not support HLS streaming.');
+        playerStatusElem.textContent = 'Unsupported';
+      }
+    }
+
+    /**
+     * Ingests verified stream data from working_streams.json
+     * (checking local file first, then the backend GitHub repository raw URL).
+     */
+    async function loadChannels() {
+      var channelListContainer = document.getElementById('channel-list');
+      var channelCounterElem = document.getElementById('channel-counter');
+
+      var sources = [
+        'working_streams.json',
+        'https://raw.githubusercontent.com/SamuelGathua/football_backend/main/working_streams.json'
+      ];
+
+      var streams = null;
+      for (var src of sources) {
+        try {
+          var response = await fetch(src, { cache: 'no-store' });
+          if (response.ok) {
+            var data = await response.json();
+            if (Array.isArray(data) && data.length > 0) {
+              streams = data;
+              console.log('Loaded streams from:', src);
+              break;
+            }
+          }
+        } catch (e) {
+          console.warn('Could not load from ' + src, e);
+        }
+      }
+
+      channelListContainer.innerHTML = '';
+
+      if (!streams || streams.length === 0) {
+        channelListContainer.innerHTML = `
+          <div class="empty-state">
+            <span>⚡</span>
+            <strong>No Streams Loaded</strong>
+            <div style="font-size:0.75rem; margin-top:0.5rem; color:var(--text-muted);">
+              Run <code>check_streams.py</code> in the backend, or paste a direct .m3u8 stream below.
+            </div>
+            <button class="load-btn" style="margin-top:1rem; width:100%;" onclick="playDefaultDemo()">Play Mux Demo</button>
+          </div>
+        `;
+        channelCounterElem.textContent = '0 Verified';
+        return;
+      }
+
+      channelCounterElem.textContent = streams.length + ' Verified';
+
+      streams.forEach(function(item, index) {
+        var btn = document.createElement('button');
+        btn.className = 'channel-btn';
+        btn.dataset.streamUrl = item.url;
+
+        var channelName = item.name || ('Stream #' + item.id);
+
+        btn.innerHTML = `
+          <div class="channel-info">
+            <span class="channel-title-text">${escapeHtml(channelName)}</span>
+            <span class="channel-id-text">ID: ${item.id} &bull; HLS Direct</span>
+          </div>
+          <span class="channel-status-pill">ONLINE</span>
+        `;
+
+        btn.onclick = function() {
+          playStream(item.url, channelName);
+        };
+
+        channelListContainer.appendChild(btn);
+
+        if (index === 0) {
+          playStream(item.url, channelName);
+        }
+      });
+    }
+
+    function playCustomInput() {
+      var input = document.getElementById('custom-url-input');
+      var url = input.value.trim();
+      if (url) {
+        playStream(url, 'Custom Stream Input');
+      }
+    }
+
+    function playDefaultDemo() {
+      playStream('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8', 'Mux Live HLS Demo');
+    }
+
+    function escapeHtml(text) {
+      var div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    window.addEventListener('DOMContentLoaded', function() {
+      loadChannels();
+    });
+  </script>
+</body>
+</html>
