@@ -1,0 +1,13 @@
+{
+  "name": "football-frontend",
+  "version": "1.0.0",
+  "description": "Responsive dark-mode HLS live sports frontend powered by Hls.js",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve . -l 8080",
+    "dev": "serve . -l 8080"
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}
