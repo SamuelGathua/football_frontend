@@ -1,28 +1,22 @@
-# Football Live Stream Frontend
+# SportzStream Live - World Sports TV Hub
 
-Single-page web application powered by **Hls.js** that connects to verified HLS live streams with an ultra-sleek dark mode interface (Charcoal, Pitch Black, Electric Gold, and Cyan).
+A dedicated sports streaming portal powered by **TV Garden**'s global live sports channel directory.
 
 ## Features
-- **Hls.js Engine**: High performance decoding of `.m3u8` streams across modern browsers.
-- **Auto Manifest Ingestion**: Automatically loads channels from local `working_streams.json` or syncs directly with the remote GitHub backend repository.
-- **Safari / WebKit Native Fallback**: Seamless playback on iOS and macOS devices.
-- **Active Channel Switching**: Real-time channel switching without video overlay/audio overlap.
-- **Manual Input Bar**: Test any custom HLS URL directly in the player.
+- **Sports-Only Default Feed**: Defaults directly to `https://tvgarden.world/tv/sports` for global sports channels.
+- **Match Schedules**: Instant switch to live match schedules (`https://tvgarden.world/schedule/`).
+- **Country Filter Tabs**: Quick access to sports broadcasts from the UK, USA, Spain, Germany, and France.
+- **Custom Tuner**: Load any country code (e.g. `it`, `br`, `za`) or custom stream channel directly.
+- **Controls**: Built-in player reload and native full-screen mode.
+- **Responsive Dark Mode**: High-contrast charcoal, electric gold, and cyan design system.
 
-## How to Run Locally
+## Run Locally
 
-You can serve this frontend using any static web server:
-
-### Using Python:
 ```bash
+# Using Node.js:
+npm start
+
+# Or using Python:
 python -m http.server 8080
 ```
-Then visit [http://localhost:8080](http://localhost:8080).
-
-### Using Node.js (npx serve):
-```bash
-npx serve .
-```
-
-## Deployment
-Can be deployed instantly on **GitHub Pages**, **Vercel**, or **Netlify** by pointing to `index.html`.
+Open [http://localhost:8080](http://localhost:8080) in your browser.
